@@ -1,0 +1,226 @@
+# Architecture Documentation
+
+---
+
+## System Overview
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Client (Mobile/Web)                    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    NestJS + Fastify API                     │
+│  ┌─────────────┬─────────────┬─────────────┬─────────────┐ │
+│  │   Auth      │   Users     │   Admin     │   Orders    │ │
+│  │   Module    │   Module    │   Module    │   Module    │ │
+│  └─────────────┴─────────────┴─────────────┴─────────────┘ │
+│  ┌─────────────┬─────────────┬─────────────┬─────────────┐ │
+│  │   JWT Guard │  Role Guard │  Validation │   Logger    │ │
+│  └─────────────┴─────────────┴─────────────┴─────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   TypeORM (PostgreSQL)                       │
+│  ┌─────────┬─────────┬──────────┬────────────┐             │
+│  │  Users  │ Grocery │  Orders  │ OrderItems │             │
+│  └─────────┴─────────┴──────────┴────────────┘             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Module Architecture
+
+### Auth Module
+```
+┌─────────────────────────────────────────┐
+│              Auth Controller            │
+│  - POST /register                       │
+│  - POST /login                          │
+└─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────┐
+│              Auth Service               │
+│  - register(userDto)                    │
+│  - login(credentials)                  │
+│  - validateUser()                       │
+└─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────┐
+│             JWT Strategy                │
+│  - jwtExtract()                         │
+│  - validate(payload)                   │
+└─────────────────────────────────────────┘
+```
+
+### Users Module
+- User entity management
+- Profile updates
+
+### Admin Module
+- User role management
+- Grocery CRUD operations
+- Inventory adjustments
+
+### Orders Module
+```
+┌─────────────────────────────────────────┐
+│            Order Controller             │
+│  - POST /orders (create)               │
+│  - GET /orders/my (list)               │
+│  - DELETE /orders/:id (cancel)          │
+└─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────┐
+│            Order Service                │
+│  - createOrder(items)                  │
+│  - getUserOrders(userId)               │
+│  - cancelOrder(orderId, userId)        │
+│  - calculateTotal(items)               │
+└─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────┐
+│        Transaction Manager              │
+│  - selectForUpdate()                   │
+│  - inventoryCheck()                    │
+│  - atomicCommit()                      │
+└─────────────────────────────────────────┘
+```
+
+---
+
+## Request Flow: Create Order
+
+```
+User Request
+    │
+    ▼
+[ValidationPipe] ── Invalid? ──► 400 Bad Request
+    │
+    ▼
+[JwtAuthGuard] ── Invalid token? ──► 401 Unauthorized
+    │
+    ▼
+[RolesGuard] ── Wrong role? ──► 403 Forbidden
+    │
+    ▼
+[OrderService.createOrder()]
+    │
+    ├──▶ BEGIN TRANSACTION
+    │
+    ├──▶ SELECT inventory FOR UPDATE (row lock)
+    │        └──▶ Insufficient? ──► ROLLBACK ──► 422
+    │
+    ├──▶ DECREMENT inventory
+    │
+    ├──▶ CALCULATE total_price (snapshot prices)
+    │
+    ├──▶ INSERT orders
+    │
+    ├──▶ INSERT order_items
+    │
+    └──▶ COMMIT ──► 201 Created
+```
+
+---
+
+## Database Relationships
+
+```
+┌──────────────┐       ┌──────────────┐
+│    users     │       │ grocery_items│
+├──────────────┤       ├──────────────┤
+│ id (PK)      │◄──────│ id (PK)      │
+│ name         │       │ name         │
+│ email        │       │ price        │
+│ password_hash│       │ inventory    │
+│ role         │       │ is_active    │
+└──────────────┘       └──────────────┘
+       │                      ▲
+       │                      │
+       ▼                      │
+┌──────────────┐              │
+│    orders    │              │
+├──────────────┤              │
+│ id (PK)      │              │
+│ user_id (FK)─┼──────────────┘
+│ status       │       ┌──────────────┐
+│ total_price  │       │  order_items │
+│ created_at   │       ├──────────────┤
+└──────────────┘       │ id (PK)      │
+       ▲                │ order_id (FK)┼──┐
+       │                │ grocery_id   │  │
+       └────────────────│ quantity     │──┤
+                        │ unit_price   │  │
+                        └──────────────┘  │
+                                            │
+                         1 order has N items│
+                         1 item can be in N orders
+```
+
+---
+
+## Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Production                          │
+│                                                             │
+│  ┌───────────────┐         ┌───────────────┐               │
+│  │  Load Balancer │────────▶│  NestJS App   │               │
+│  │  (nginx/haproxy)│         │  (Docker)     │               │
+│  └───────────────┘         └───────┬───────┘               │
+│                                    │                       │
+│                                    ▼                       │
+│                           ┌───────────────┐                │
+│                           │  PostgreSQL   │                │
+│                           │  (RDS/Cloud)  │                │
+│                           └───────────────┘                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Technology Decisions
+
+| Component | Choice | Rationale |
+|-----------|--------|-----------|
+| Fastify | Adapter over Express | Higher throughput, lower latency |
+| TypeORM | ORM | Decorator-based, NestJS native |
+| UUID | gen_random_uuid() | Distributed-safe IDs |
+| Transactions | SERIALIZABLE | Prevents overselling |
+| ValidationPipe | Global | Centralized DTO validation |
+
+---
+
+## Assumptions & Constraints
+
+| Category | Details |
+|----------|---------|
+| **Currency** | USD only |
+| **Timezone** | UTC for all timestamps |
+| **Order Limits** | Max 100 items per order |
+| **Order Total** | Max $10,000 |
+| **JWT Expiry** | 7 days (no refresh token) |
+| **Concurrency** | Handles concurrent requests via row-level locking |
+| **Pagination** | All list endpoints paginated (default: page=1, limit=10) |
+| **Soft Delete** | Grocery items use `is_active` flag |
+| **Inventory** | Only positive counts shown to users |
+
+---
+
+## Non-Functional Requirements
+
+| Requirement | Target |
+|-------------|--------|
+| Response time | < 200ms for 95th percentile |
+| Uptime | 99.9% |
+| Concurrent users | 1000+ |
+| Max request size | 1MB |
