@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { AuthService } from "./auth.service";
+import { AuthService } from "../../src/modules/auth/services/auth.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { User } from "../users/entities/user.entity";
+import { User } from "../../src/modules/users/entities/user.entity";
 import { JwtService } from "@nestjs/jwt";
 import { ConflictException, UnauthorizedException } from "@nestjs/common";
 

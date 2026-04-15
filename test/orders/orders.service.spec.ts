@@ -1,10 +1,13 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { DataSource, Repository, SelectQueryBuilder } from "typeorm";
-import { OrdersService } from "./orders.service";
-import { Order, OrderStatus } from "./entities/order.entity";
-import { OrderItem } from "./entities/orderItem.entity";
-import { GroceryItem } from "../grocery/entities/groceryItem.entity";
+import { OrdersService } from "../../src/modules/orders/services/orders.service";
+import {
+  Order,
+  OrderStatus,
+} from "../../src/modules/orders/entities/order.entity";
+import { OrderItem } from "../../src/modules/orders/entities/orderItem.entity";
+import { GroceryItem } from "../../src/modules/grocery/entities/groceryItem.entity";
 import {
   NotFoundException,
   ForbiddenException,

@@ -21,10 +21,10 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { OrdersService } from "./orders.service";
-import { CreateOrderDto } from "./dto/create-order.dto";
-import { OrderStatus } from "./entities/order.entity";
+import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
+import { OrdersService } from "../services/orders.service";
+import { CreateOrderDto } from "../dto/create-order.dto";
+import { OrderStatus } from "../entities/order.entity";
 import { Request } from "express";
 
 interface AuthenticatedRequest extends Request {

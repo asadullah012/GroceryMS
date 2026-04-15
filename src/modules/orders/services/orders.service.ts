@@ -6,10 +6,10 @@ import {
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DataSource } from "typeorm";
-import { Order, OrderStatus } from "./entities/order.entity";
-import { OrderItem } from "./entities/orderItem.entity";
-import { GroceryItem } from "../grocery/entities/groceryItem.entity";
-import { CreateOrderDto } from "./dto/create-order.dto";
+import { Order, OrderStatus } from "../entities/order.entity";
+import { OrderItem } from "../entities/orderItem.entity";
+import { GroceryItem } from "../../grocery/entities/groceryItem.entity";
+import { CreateOrderDto } from "../dto/create-order.dto";
 
 @Injectable()
 export class OrdersService {

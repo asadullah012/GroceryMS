@@ -13,8 +13,8 @@ import {
   ApiQuery,
   ApiResponse,
 } from "@nestjs/swagger";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { GroceryService } from "./grocery.service";
+import { JwtAuthGuard } from "../../auth/guards/jwt-auth.guard";
+import { GroceryService } from "../services/grocery.service";
 
 @ApiTags("Grocery")
 @ApiBearerAuth()

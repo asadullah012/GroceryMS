@@ -1,9 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { AdminUsersService } from "./admin-users.service";
-import { AdminGroceryService } from "./admin-grocery.service";
-import { User, UserRole } from "../../users/entities/user.entity";
-import { GroceryItem } from "../../grocery/entities/groceryItem.entity";
+import { AdminUsersService } from "../../src/modules/admin/services/admin-users.service";
+import { AdminGroceryService } from "../../src/modules/admin/services/admin-grocery.service";
+import { User, UserRole } from "../../src/modules/users/entities/user.entity";
+import { GroceryItem } from "../../src/modules/grocery/entities/groceryItem.entity";
 import { NotFoundException, ConflictException } from "@nestjs/common";
 
 describe("AdminUsersService", () => {

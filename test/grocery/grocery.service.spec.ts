@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { GroceryService } from "./grocery.service";
+import { GroceryService } from "../../src/modules/grocery/services/grocery.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
-import { GroceryItem } from "./entities/groceryItem.entity";
+import { GroceryItem } from "../../src/modules/grocery/entities/groceryItem.entity";
 
 describe("GroceryService", () => {
   let service: GroceryService;

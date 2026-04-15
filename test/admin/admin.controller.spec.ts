@@ -1,9 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { AdminUsersController } from "./admin-users.controller";
-import { AdminGroceryController } from "./admin-grocery.controller";
-import { AdminUsersService } from "../services/admin-users.service";
-import { AdminGroceryService } from "../services/admin-grocery.service";
-import { UserRole } from "../../users/entities/user.entity";
+import { AdminUsersController } from "../../src/modules/admin/controllers/admin-users.controller";
+import { AdminGroceryController } from "../../src/modules/admin/controllers/admin-grocery.controller";
+import { AdminUsersService } from "../../src/modules/admin/services/admin-users.service";
+import { AdminGroceryService } from "../../src/modules/admin/services/admin-grocery.service";
+import { UserRole } from "../../src/modules/users/entities/user.entity";
 
 describe("AdminUsersController", () => {
   let controller: AdminUsersController;
